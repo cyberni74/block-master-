@@ -768,7 +768,8 @@ function metrics() {
   return { size: a.width, step: b.left - a.left, left: a.left, top: a.top };
 }
 function startDrag(e, idx, el) {
-  if (!$('over').hidden || busy || drag) return;
+  if (!$('over').hidden || busy) return;
+  if (drag) dragEnd(true);
   e.preventDefault();
   audio();
   const p = tray[idx], m = metrics(), [h, w] = dims(p.shape);
@@ -786,8 +787,8 @@ function startDrag(e, idx, el) {
   // lift the piece above the finger on touch so it stays visible
   const lift = e.pointerType === 'mouse' ? gh / 2 : gh + 30;
   drag = { idx, p, el, g, gw, gh, lift, m, pos: null };
-  el.setPointerCapture(e.pointerId);
-  el.onpointermove = moveDrag; el.onpointerup = endDrag; el.onpointercancel = endDrag;
+  try { el.setPointerCapture(e.pointerId); } catch {}
+  addEventListener('pointermove', moveDrag); addEventListener('pointerup', onDragUp); addEventListener('pointercancel', onDragCancel);
   moveDrag(e);
 }
 function moveDrag(e) {
@@ -811,12 +812,14 @@ function showPreview() {
     if (extra.has(i)) cells[i].style.setProperty('--c', `var(--b${p.color})`);
   });
 }
-function endDrag() {
+// the drag ends on the window, so it still ends when the piece itself is re-rendered mid-drag
+const onDragUp = () => dragEnd(false), onDragCancel = () => dragEnd(true);
+function dragEnd(cancel) {
   if (!drag) return;
   const { idx, p, el, g, pos } = drag;
-  el.onpointermove = el.onpointerup = el.onpointercancel = null;
+  removeEventListener('pointermove', moveDrag); removeEventListener('pointerup', onDragUp); removeEventListener('pointercancel', onDragCancel);
   g.remove(); el.classList.remove('lifted'); drag = null;
-  if (pos) place(idx, p, pos); else renderBoard();
+  if (!cancel && pos) place(idx, p, pos); else renderBoard();
 }
 
 // ---- game rules ----
@@ -870,8 +873,8 @@ function clearCells(gone, then) {
     if (gone.size && board.every(v => v == null)) {
       addScore(500); floatText(t('perfect'), 'tier low', 3); shake(16, .6); flash(); sfx.tier(6); rain(60);
     }
-    then();
     busy = false;
+    then();
     renderBoard(); afterMove();
   }, 360);
 }
