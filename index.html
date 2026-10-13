@@ -971,17 +971,15 @@ function bigEvent(n, gain) {
   const lvl = Math.min(n, 6), reward = (n - 3) * 5, ms = 1600 + (n - 4) * 600;
   const d = document.createElement('div'); d.className = 'record stage n' + lvl; d.style.setProperty('--n', n);
   d.innerHTML = (lvl >= 6 ? '<svg><use href="#crown"/></svg>' : '') +
-    (n >= 6 ? '<p class="mk ultra">ULTRA KILL!</p>' : n >= 5 ? '<p class="mk">MONSTER KILL!</p>' : '') +
+    (n >= 5 ? '<p class="mk ultra">ULTRA KILL!</p>' : '<p class="mk">MONSTER KILL!</p>') +
     `<h3>${t('t' + lvl)}</h3><p class="pts">+${gain}</p><p>${t('diamond', { n: reward })}${feverOn() ? ' · ' + t('fever') : ''}</p>`;
   document.body.appendChild(d); setTimeout(() => d.remove(), ms + 100);
   addCrystals(reward);
   // hit-stop: the board swells for a beat before it bursts
   app.classList.add('hitstop'); setTimeout(() => app.classList.remove('hitstop'), 90 + n * 20);
-  if (n >= 5) {
-    $('wrap').classList.add('rainbow'); setTimeout(() => $('wrap').classList.remove('rainbow'), ms);
-    sfx.announce(n >= 6 ? 'Ultra kill!' : 'Monster kill!', n >= 6);
-    if (n >= 6) setTimeout(sfx.fanfare, 2400);
-  }
+  sfx.announce(n >= 5 ? 'Ultra kill!' : 'Monster kill!', n >= 5);   // 4 lines: Monster kill, 5+ lines: Ultra kill
+  if (n >= 5) { $('wrap').classList.add('rainbow'); setTimeout(() => $('wrap').classList.remove('rainbow'), ms); }
+  if (n >= 6) setTimeout(sfx.fanfare, 2400);
   for (let k = 0; k < (n - 3) * 3; k++) setTimeout(() => firework(), 150 + k * 220);
   if (n >= 6) for (let k = 0; k < 3; k++) setTimeout(() => { flash(); shake(22, .6); rain(60); }, 400 + k * 600);
 }
