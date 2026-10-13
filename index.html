@@ -337,7 +337,9 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:3px}
   <h1 class="title">Block Master</h1>
   <p class="tagline" data-i="tagline"></p>
   <div class="rec"><svg><use href="#crown"/></svg><span data-i="highscore"></span> <span id="startBest">0</span></div>
-  <button class="btn play" id="play" data-i="play"></button>
+  <p class="sync" id="resumeInfo" hidden></p>
+  <button class="btn play" id="play"></button>
+  <button class="btn alt" id="startNew" data-i="newGame" hidden></button>
   <button class="btn alt" id="startBoard" data-i="board" hidden></button>
   <div class="meta">
     <span class="pill" style="cursor:default"><svg><use href="#gem"/></svg><span id="startCrystals">0</span></span>
@@ -355,6 +357,7 @@ const COST = { reroll: 20, bomb: 40 };
 const I18N = {
   de: {
     play: 'Spielen', tagline: 'Räume Reihen. Jage den Highscore.',
+    resume: 'Weiterspielen', resumeInfo: 'Deine Runde läuft noch: {n} Punkte', syncDevice: 'Gespeichert auf diesem Handy · {n}',
     board: 'Rangliste', yourName: 'Dein Spielername', saveName: 'Speichern', changeName: 'Namen ändern',
     nameHint: 'So erscheinst du in der Rangliste. Keine Anmeldung nötig: Dein Handy wird wiedererkannt.',
     yourRank: 'Dein Platz: {r} von {t}', boardOffline: 'Die Rangliste ist gerade nicht erreichbar.', boardEmpty: 'Noch keine Einträge. Sei der Erste!',
@@ -376,6 +379,7 @@ const I18N = {
   },
   th: {
     play: 'เริ่มเล่น', tagline: 'เคลียร์แถว ล่าสถิติสูงสุด',
+    resume: 'เล่นต่อ', resumeInfo: 'เกมของคุณยังค้างอยู่: {n} คะแนน', syncDevice: 'บันทึกไว้ในโทรศัพท์เครื่องนี้ · {n}',
     board: 'อันดับ', yourName: 'ชื่อผู้เล่นของคุณ', saveName: 'บันทึก', changeName: 'เปลี่ยนชื่อ',
     nameHint: 'ชื่อนี้จะแสดงในตารางอันดับ ไม่ต้องสมัครสมาชิก ระบบจะจำโทรศัพท์ของคุณ',
     yourRank: 'อันดับของคุณ: {r} จาก {t}', boardOffline: 'ไม่สามารถโหลดตารางอันดับได้ในขณะนี้', boardEmpty: 'ยังไม่มีผู้เล่น เป็นคนแรกเลย!',
@@ -660,7 +664,7 @@ function applyLang() {
   document.querySelectorAll('#lang span, #startLang span').forEach(s => s.classList.toggle('on', s.dataset.l === save.lang));
   $('lang').setAttribute('aria-label', t('lang'));
   $('crystalPill').setAttribute('aria-label', t('crystals'));
-  renderMute(); renderEnergy(); renderTray(); renderProfile();
+  renderMute(); renderEnergy(); renderTray(); renderProfile(); renderStartStats();
   if (!$('modal').hidden && $('sheet').dataset.kind === 'missions') openMissions();
 }
 (function tick() {
@@ -688,6 +692,32 @@ function newGame() {
   tray = freshTray();
   $('over').hidden = true; $('score').textContent = 0;
   renderBoard(); renderTray(); renderEnergy(); renderProfile();
+  clearRound();
+}
+
+// ---- the running round survives closing the app (kept on this device) ----
+const ROUND_KEY = 'blockmaster-round';
+function saveRound() {
+  try { localStorage.setItem(ROUND_KEY, JSON.stringify({ board, dia, tray, score, combo, sinceClear, energy, pendingBombs, revives, bestAtStart, recordBroken, traysDealt })); } catch {}
+}
+function clearRound() { try { localStorage.removeItem(ROUND_KEY); } catch {} }
+function loadRound() {
+  try {
+    const d = JSON.parse(localStorage.getItem(ROUND_KEY) || 'null');
+    const ok = d && Array.isArray(d.board) && d.board.length === N*N && Array.isArray(d.tray) && d.tray.length &&
+      d.tray.every(p => p && Array.isArray(p.shape) && p.shape.length) && num(d.score) > 0;
+    return ok ? d : null;
+  } catch { return null; }
+}
+function restoreRound(d) {
+  board = d.board.map(v => v == null ? null : num(v)); tray = d.tray;
+  score = num(d.score); combo = num(d.combo); sinceClear = num(d.sinceClear);
+  dia = Array.isArray(d.dia) && d.dia.length === N*N ? d.dia.map(Boolean) : Array(N*N).fill(false);
+  energy = num(d.energy); pendingBombs = num(d.pendingBombs); revives = num(d.revives); shown = score;
+  bestAtStart = d.bestAtStart ?? save.best; recordBroken = !!d.recordBroken; traysDealt = num(d.traysDealt);
+  $('score').textContent = score;
+  renderBoard(); renderTray(); renderEnergy(); renderProfile(); checkOver();
+  if ($('over').hidden) saveRound();
 }
 
 // ---- score, xp, crystals ----
@@ -920,6 +950,7 @@ function afterMove() {
     tray = freshTray();
     if (pendingBombs) { pendingBombs--; tray[0] = bombPiece(); }
   }
+  saveRound();
   renderTray(); renderProfile(); checkOver();
 }
 const reviveCost = () => 20 * 2 ** revives;
@@ -930,6 +961,7 @@ function checkOver() {
   $('revive').disabled = save.crystals < reviveCost() || !board.some(v => v == null);
   $('over').hidden = false;
   sfx.over();
+  clearRound();
   submitScore();
 }
 function revive() {
@@ -938,6 +970,7 @@ function revive() {
   save.crystals -= cost; revives++; persist();
   tray = makePieces(3);
   $('over').hidden = true;
+  saveRound();
   renderTray(); renderProfile(); sfx.tier(2);
 }
 function usePower(kind) {
@@ -951,7 +984,7 @@ function usePower(kind) {
     tray = tray.map(p => p.used || p.bomb ? p : fresh.shift());
   }
   if (kind === 'bomb') { const k = tray.findIndex(p => p.used); tray[k >= 0 ? k : tray.length - 1] = bombPiece(); }
-  persist(); renderTray(); renderProfile(); sfx.place(); checkOver();
+  persist(); saveRound(); renderTray(); renderProfile(); sfx.place(); checkOver();
 }
 
 // ---- spectacle ----
@@ -1185,7 +1218,13 @@ function renderStartStats() {
   $('startBest').textContent = save.best;
   $('startCrystals').textContent = save.crystals;
   $('startLvl').textContent = save.level;
+  // a round in progress: Play continues it, "New game" starts over
+  const running = score > 0 && $('over').hidden;
+  $('play').textContent = t(running ? 'resume' : 'play');
+  $('resumeInfo').hidden = $('startNew').hidden = !running;
+  if (running) $('resumeInfo').textContent = t('resumeInfo', { n: score });
 }
+$('startNew').onclick = () => { newGame(); $('play').click(); };
 $('play').onclick = () => {
   audio(); sfx.tier(2);
   $('start').classList.add('leave');
@@ -1234,7 +1273,7 @@ function openName(after) {
   const done = () => {
     const v = inp.value.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 16);
     if (!v) { inp.focus(); return; }
-    save.name = v; persist(); closeSheet();
+    save.name = v; persist(); closeSheet(); renderSync();
     submitScore(true);
     after?.();
   };
@@ -1345,7 +1384,10 @@ async function flushCloud() {
   if (cloudDirty) scheduleCloud();
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden) { clearTimeout(cloudTimer); flushCloud(); } });
-function renderSync() { $('sync').textContent = t(cloudState === 'cloud' ? 'syncCloud' : 'syncLocal'); }
+function renderSync() {
+  $('sync').textContent = cloudState === 'cloud' ? t('syncCloud')
+    : ONLINE && save.name ? t('syncDevice', { n: save.name }) : t('syncLocal');
+}
 function afterSync() {
   dailySetup();
   renderProfile(); renderStartStats(); applyLang(); renderSync();
@@ -1354,13 +1396,10 @@ function afterSync() {
 }
 
 function start(data) {
+  const saved = loadRound();
   newGame();
-  if (data && Array.isArray(data.board) && data.board.length === N*N) {
-    ({ board, tray, score, combo, sinceClear } = data);
-    dia = data.dia ?? Array(N*N).fill(false); energy = data.energy ?? 0; pendingBombs = data.pendingBombs ?? 0; revives = data.revives ?? 0; shown = score;
-    bestAtStart = data.bestAtStart ?? save.best; recordBroken = data.recordBroken ?? false; traysDealt = data.traysDealt ?? 0;
-    renderBoard(); renderTray(); renderEnergy(); checkOver();
-  } else showStart();
+  if (data && Array.isArray(data.board) && data.board.length === N*N) restoreRound(data);
+  else { if (saved) restoreRound(saved); showStart(); }
   applyLang(); renderSync();
   // wait briefly for the cloud profile, then set up today's bonus and missions
   Promise.race([cloudInit().catch(() => {}), new Promise(r => setTimeout(r, 4000))]).then(afterSync);
