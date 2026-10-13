@@ -111,7 +111,7 @@ body{background:radial-gradient(ellipse at 50% 25%,#2b1f1d,var(--bg) 70%);backgr
   animation:slam2 .5s cubic-bezier(.2,1.6,.4,1) .05s both, mkpulse .2s ease-in-out .6s 10 alternate, rainbow 1.2s linear infinite}
 @keyframes mkpulse{to{transform:scale(1.08);text-shadow:0 0 30px #ff5d5d,0 3px 0 #4a0008}}
 .record.n4::before{background:repeating-conic-gradient(rgb(255 170 60 / .3) 0 9deg,transparent 9deg 18deg)}
-.record.n5::before,.record.n6::before{background:repeating-conic-gradient(rgb(255 80 200 / .35) 0 8deg,transparent 8deg 16deg);animation:rays 3s linear infinite, rainbow 1.5s linear infinite}
+.record.n5::before,.record.n6::before{background:repeating-conic-gradient(rgb(255 80 200 / .35) 0 8deg,transparent 8deg 16deg);animation:rays 3s linear infinite}
 .record.n6{background:radial-gradient(circle,rgb(60 10 50 / .7),transparent 75%)}
 .record.n6 h3{animation:slam2 .8s cubic-bezier(.2,1.6,.4,1) .15s both, rainbow 1s linear infinite}
 .boardwrap.rainbow #board{animation:rainglow .5s linear infinite}
@@ -136,8 +136,9 @@ body{background:radial-gradient(ellipse at 50% 25%,#2b1f1d,var(--bg) 70%);backgr
 #board{position:absolute;inset:0;display:grid;grid-template-columns:repeat(10,1fr);gap:2px;padding:7px;
   background:linear-gradient(160deg,#2f2624,var(--surface));border-radius:10px;touch-action:none;
   box-shadow:0 0 0 3px #4a3530, 0 0 0 5px #1d1513, 0 18px 40px rgb(0 0 0 / .55);transition:box-shadow .4s}
-.boardwrap.fever #board{animation:feverglow 1s ease-in-out infinite alternate}
-@keyframes feverglow{from{box-shadow:0 0 0 3px #ffc23d,0 0 18px #ffb000,0 18px 40px rgb(0 0 0 / .55)}to{box-shadow:0 0 0 3px #fff0a0,0 0 42px #ffcf3d,0 18px 40px rgb(0 0 0 / .55)}}
+.boardwrap.fever #board{box-shadow:0 0 0 3px #ffc23d,0 0 26px #ffb000,0 18px 40px rgb(0 0 0 / .55)}
+.boardwrap.fever::before{content:"";position:absolute;inset:-8px;border-radius:16px;box-shadow:0 0 40px #ffb000;animation:pulse 1s ease-in-out infinite alternate;pointer-events:none}
+@keyframes pulse{from{opacity:.15}to{opacity:1}}
 .cell{position:relative;border-radius:2px;background:var(--cell);
   box-shadow:inset 0 0 0 1px var(--cell-edge), inset 0 3px 4px rgb(0 0 0 / .4)}
 /* faceted gem: four bevel facets (conic), a bright table on top, a gold setting */
@@ -152,7 +153,7 @@ body{background:radial-gradient(ellipse at 50% 25%,#2b1f1d,var(--bg) 70%);backgr
   background:linear-gradient(135deg,color-mix(in srgb,var(--c),#fff 55%),var(--c) 50%,color-mix(in srgb,var(--c),#000 12%));
   box-shadow:inset 0 0 0 1px rgb(255 255 255 / .35)}
 .cell.on::before,.pc::before,.ghost i::before{content:"";position:absolute;z-index:1;left:28%;top:26%;width:20%;height:10%;
-  border-radius:50%;background:rgb(255 255 255 / .85);filter:blur(.6px);transform:rotate(-30deg)}
+  border-radius:50%;background:rgb(255 255 255 / .85);transform:rotate(-30deg)}
 /* diamond: rare white gem that pays crystals */
 .dia{--c:#e8fbff!important}
 .dia::after{background:conic-gradient(from 0deg,#fff,#bff3ff,#fff,#ffd6f5,#fff,#c9ffd9,#fff)!important;animation:spark 1.4s linear infinite}
@@ -177,7 +178,7 @@ body{background:radial-gradient(ellipse at 50% 25%,#2b1f1d,var(--bg) 70%);backgr
 @keyframes bob{50%{transform:translateY(-5px) scale(1.08)}}
 .tag{font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
 .ghost{position:fixed;left:0;top:0;display:grid;pointer-events:none;z-index:10;
-  filter:drop-shadow(0 0 6px rgb(255 255 255 / .95)) drop-shadow(0 0 26px var(--glow)) drop-shadow(0 0 40px var(--glow))}
+  opacity:.94}
 .ghost i{display:block}
 
 /* power-ups */
@@ -214,7 +215,7 @@ body{background:radial-gradient(ellipse at 50% 25%,#2b1f1d,var(--bg) 70%);backgr
 
 /* overlays */
 .over{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:6;
-  background:color-mix(in srgb,var(--bg) 84%,transparent);border-radius:10px;backdrop-filter:blur(3px);text-align:center;padding:16px}
+  background:color-mix(in srgb,var(--bg) 84%,transparent);border-radius:10px;text-align:center;padding:16px}
 .over h2,.sheet h2{font-family:var(--display);font-weight:800;font-size:1.9rem;margin:0;line-height:1.1}
 .over p{margin:0;color:var(--muted)}
 .btn{font:700 1rem var(--body);padding:12px 24px;border-radius:999px;border:0;background:var(--accent);color:#2a1606;cursor:pointer;
@@ -461,8 +462,6 @@ function pickShape(fill, maxSize = 9, d = 0) {
   const pool = SHAPES.filter(s => s.shape.length <= maxSize).map(s => {
     const n = s.shape.length;
     let w = s.we + (s.wh - s.we) * d;
-    if (fill > .45 && n >= 5) w *= .35;
-    if (fill > .6 && n >= 4) w *= .5;
     if (fill < .25 && n <= 2) w *= .5;
     return [s.shape, w];
   });
@@ -486,8 +485,10 @@ function fitsAnywhere(shape) {
   for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (fits(shape, r, c)) return true;
   return false;
 }
-// ---- tray generator: pieces can't be rotated, so a new set must be placeable as dealt ----
-// works on a plain 0/1 grid copy and simulates line clears between placements
+// ---- tray generator ----
+// Pieces can't be rotated. Early on every piece is guaranteed to fit somewhere, so the start is
+// never a dead end. Later sets are dealt without that guarantee: when none of the three pieces in
+// the tray fits any more, the run is over.
 function simFits(g, shape, r, c) {
   for (const [dr, dc] of shape) {
     const rr = r + dr, cc = c + dc;
@@ -513,22 +514,9 @@ function simPlace(g, shape, r, c) {
   cols.forEach(i => { for (let j = 0; j < N; j++) n[j*N+i] = 0; });
   return { g: n, lines: rows.length + cols.length };
 }
-// can all shapes be placed, in some order, counting the clears in between?
-function solvable(g, shapes, budget = { n: 3000 }) {
-  if (!shapes.length) return true;
-  if (shapes.length === 1) return simPositions(g, shapes[0]).length > 0;
-  for (let i = 0; i < shapes.length; i++) {
-    const rest = shapes.filter((_, k) => k !== i);
-    for (const [r, c] of simPositions(g, shapes[i])) {
-      if (--budget.n < 0) return true; // searched long enough: treat as fair
-      if (solvable(simPlace(g, shapes[i], r, c).g, rest, budget)) return true;
-    }
-  }
-  return false;
-}
-// a shape that can finish at least one line right now (keeps the game flowing)
+// a shape that can finish at least one line right now
 function finisherShape(g, fill, d) {
-  for (let k = 0; k < 25; k++) {
+  for (let k = 0; k < 20; k++) {
     const s = pickShape(fill, 9, d);
     if (simPositions(g, s).some(([r, c]) => simPlace(g, s, r, c).lines > 0)) return s;
   }
@@ -536,49 +524,35 @@ function finisherShape(g, fill, d) {
 }
 
 // ---- adaptive difficulty ----
-// d grows with how long this round has run and how much was scored, then a
-// "mercy" term eases off when the board is crowded or the player just revived,
-// and a "streak" term pushes back while the player is on a roll.
+// d rises with the number of sets dealt and the score. Only a nearly full board eases it off a little.
 function difficulty(fill) {
-  const ramp = 1 - Math.exp(-traysDealt / 22);            // ~0.36 after 10 sets, ~0.75 after 30, ~0.9 after 50
+  const ramp = 1 - Math.exp(-traysDealt / 22);             // ~0.36 after 10 sets, ~0.75 after 30
   const prog = Math.min(1, score / 25000);
   let d = .75 * ramp + .25 * prog;
   if (traysDealt < 3) d = 0;                               // the opening is always gentle
-  if (fill > .5) d -= (fill - .5) * 1.2;                   // mercy: up to −0.6 on a nearly full board
-  if (revives) d -= .15;
-  if (combo >= 3 || feverOn()) d += .1;                    // the player is on fire: tighten a little
+  if (fill > .7) d -= (fill - .7) * .5;                    // mercy: at most −0.15 on a nearly full board
+  if (revives) d -= .1;
+  if (combo >= 3 || feverOn()) d += .1;                    // on a roll: tighten a little
   return Math.max(0, Math.min(1, d));
 }
-// how friendly a set is on this board: line clears it can make now, and how many places it fits
-function friendliness(g, shapes) {
-  let clears = 0, room = 0;
-  for (const s of shapes) {
-    const pos = simPositions(g, s);
-    room += Math.min(pos.length, 40) / 40;
-    let best = 0;
-    for (const [r, c] of pos) best = Math.max(best, simPlace(g, s, r, c).lines);
-    clears += Math.min(best, 3) / 3;
-  }
-  return (clears * .65 + room * .35) / shapes.length;
-}
-function makePieces(count = 3) {
+// deal `count` pieces. mustFit (revive, reroll): at least one piece fits the board right now.
+function makePieces(count = 3, mustFit = false) {
   const g = board.map(v => v == null ? 0 : 1), fill = g.reduce((a, v) => a + v, 0) / (N*N);
   const d = difficulty(fill);
-  const finisherChance = .8 - .65 * d;                     // 80 % early → 15 % late
-  const candidates = [];
-  for (let attempt = 0; attempt < 80 && candidates.length < 6; attempt++) {
-    const maxSize = attempt < 40 ? 9 : attempt < 60 ? 4 : 2;
-    const shapes = Array.from({ length: count }, () => pickShape(fill, maxSize, d));
-    if (attempt < 40 && fill > .15 && Math.random() < finisherChance) { const f = finisherShape(g, fill, d); if (f) shapes[0] = f; }
-    if (solvable(g, shapes)) candidates.push({ shapes, f: friendliness(g, shapes) });
-    if (attempt >= 40 && candidates.length) break;          // crowded board: take what fits
-  }
-  if (!candidates.length) return Array.from({ length: count }, () => pieceOf([[0,0]]));
-  // friendliest first; early game deals from the top, late game from the bottom (always solvable)
-  candidates.sort((a, b) => b.f - a.f);
-  const k = Math.min(candidates.length - 1, Math.max(0, Math.round(d * (candidates.length - 1) + (Math.random() - .5))));
   lastDifficulty = d;
-  return candidates[k].shapes.sort(() => Math.random() - .5).map(pieceOf);
+  const shapes = Array.from({ length: count }, () => pickShape(fill, 9, d));
+  if (d < .35) {
+    // early game: no dead pieces, and often one that finishes a line
+    for (let i = 0; i < count; i++)
+      for (let k = 0; k < 30 && !simPositions(g, shapes[i]).length; k++) shapes[i] = pickShape(fill, 9, d);
+    if (fill > .15 && Math.random() < .6) { const f = finisherShape(g, fill, d); if (f) shapes[0] = f; }
+  }
+  if (mustFit && !shapes.some(s => simPositions(g, s).length)) {
+    let found = false;
+    for (let k = 0; k < 200 && !found; k++) { const s = pickShape(fill, 9, d); if (simPositions(g, s).length) { shapes[0] = s; found = true; } }
+    if (!found) shapes[0] = [[0,0]];                       // a single cell fits any free cell
+  }
+  return shapes.sort(() => Math.random() - .5).map(pieceOf);
 }
 const freshTray = () => { const tr = makePieces(3); traysDealt++; return tr; };
 function fullLines(extra) {
@@ -975,7 +949,7 @@ function revive() {
   const cost = reviveCost();
   if (save.crystals < cost) return;
   save.crystals -= cost; revives++; persist();
-  tray = makePieces(3);
+  tray = makePieces(3, true);
   $('over').hidden = true;
   saveRound();
   renderTray(); renderProfile(); sfx.tier(2);
@@ -987,7 +961,7 @@ function usePower(kind) {
   save.crystals -= cost;
   audio();
   if (kind === 'reroll') {
-    const fresh = makePieces(tray.filter(p => !p.used && !p.bomb).length);
+    const fresh = makePieces(tray.filter(p => !p.used && !p.bomb).length, true);
     tray = tray.map(p => p.used || p.bomb ? p : fresh.shift());
   }
   if (kind === 'bomb') { const k = tray.findIndex(p => p.used); tray[k >= 0 ? k : tray.length - 1] = bombPiece(); }
@@ -1119,7 +1093,7 @@ function loop() {
         ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(-p.s / 2, -p.s / 2, p.s / 2, p.s * .3);
       } else {
         const s = p.s * (.6 + .4 * Math.sin(p.life * 20));
-        ctx.fillStyle = '#fff6c8'; ctx.shadowColor = '#ffc23d'; ctx.shadowBlur = 12;
+        ctx.fillStyle = '#fff6c8';
         ctx.beginPath();
         ctx.moveTo(0, -s); ctx.quadraticCurveTo(0, 0, s, 0); ctx.quadraticCurveTo(0, 0, 0, s);
         ctx.quadraticCurveTo(0, 0, -s, 0); ctx.quadraticCurveTo(0, 0, 0, -s); ctx.fill();
