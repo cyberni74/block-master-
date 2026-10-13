@@ -91,8 +91,8 @@ body{background:radial-gradient(ellipse at 50% 25%,#2b1f1d,var(--bg) 70%);backgr
 @keyframes glowtxt{to{text-shadow:0 0 10px #ffc23d}}
 .record{position:fixed;inset:0;z-index:22;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
   overflow:hidden;background:radial-gradient(circle,rgb(40 22 6 / .6),transparent 70%);animation:recfade 3s ease forwards;padding-inline:16px}
-.record::before{content:"";position:absolute;left:50%;top:50%;width:200vmax;height:200vmax;margin:-100vmax 0 0 -100vmax;
-  background:repeating-conic-gradient(rgb(255 210 74 / .28) 0 9deg,transparent 9deg 18deg);animation:rays 7s linear infinite;
+.record::before{content:"";position:absolute;left:50%;top:50%;width:140vmax;height:140vmax;margin:-70vmax 0 0 -70vmax;
+  background:repeating-conic-gradient(rgb(255 210 74 / .28) 0 9deg,transparent 9deg 18deg);animation:rays 7s linear infinite;will-change:transform;
   -webkit-mask:radial-gradient(circle,#000 8%,transparent 40%);mask:radial-gradient(circle,#000 8%,transparent 40%)}
 .record svg{position:relative;width:110px;height:110px;animation:crown .9s cubic-bezier(.2,1.6,.4,1) both;filter:drop-shadow(0 0 22px #ffc23d)}
 .record h3{position:relative;margin:0;font-family:var(--display);font-weight:800;font-size:clamp(2rem,10vw,3rem);line-height:1.05;text-align:center;
@@ -108,14 +108,13 @@ body{background:radial-gradient(ellipse at 50% 25%,#2b1f1d,var(--bg) 70%);backgr
 .record .mk{font-family:var(--display);font-weight:800;font-size:clamp(1.6rem,8vw,2.4rem);letter-spacing:.04em;color:#ff2e3f;
   text-shadow:0 0 18px #ff2e3f,0 3px 0 #4a0008;animation:slam2 .5s cubic-bezier(.2,1.6,.4,1) .05s both, mkpulse .25s ease-in-out .6s 6 alternate}
 .record .mk.ultra{font-size:clamp(2rem,10vw,3rem);color:#fff;text-shadow:0 0 18px #ff3fc8,0 0 40px #9b45ff,0 3px 0 #3a0040;
-  animation:slam2 .5s cubic-bezier(.2,1.6,.4,1) .05s both, mkpulse .2s ease-in-out .6s 10 alternate, rainbow 1.2s linear infinite}
+  animation:slam2 .5s cubic-bezier(.2,1.6,.4,1) .05s both, mkpulse .2s ease-in-out .6s 10 alternate}
 @keyframes mkpulse{to{transform:scale(1.08);text-shadow:0 0 30px #ff5d5d,0 3px 0 #4a0008}}
 .record.n4::before{background:repeating-conic-gradient(rgb(255 170 60 / .3) 0 9deg,transparent 9deg 18deg)}
 .record.n5::before,.record.n6::before{background:repeating-conic-gradient(rgb(255 80 200 / .35) 0 8deg,transparent 8deg 16deg);animation:rays 3s linear infinite}
 .record.n6{background:radial-gradient(circle,rgb(60 10 50 / .7),transparent 75%)}
-.record.n6 h3{animation:slam2 .8s cubic-bezier(.2,1.6,.4,1) .15s both, rainbow 1s linear infinite}
-.boardwrap.rainbow #board{animation:rainglow .5s linear infinite}
-@keyframes rainglow{0%{box-shadow:0 0 0 3px #ff2e3f,0 0 40px #ff2e3f}33%{box-shadow:0 0 0 3px #22d0ff,0 0 40px #22d0ff}66%{box-shadow:0 0 0 3px #38d93c,0 0 40px #38d93c}100%{box-shadow:0 0 0 3px #ff3fc8,0 0 40px #ff3fc8}}
+.record.n6 h3{animation:slam2 .8s cubic-bezier(.2,1.6,.4,1) .15s both}
+.boardwrap.rainbow #board{box-shadow:0 0 0 3px #ff3fc8,0 0 26px #9b45ff,0 18px 40px rgb(0 0 0 / .55)}
 .app.hitstop #board{transform:scale(1.04);transition:transform .08s}
 @keyframes recfade{0%,82%{opacity:1}100%{opacity:0}}
 @keyframes rays{to{transform:rotate(360deg)}}
