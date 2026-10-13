@@ -665,7 +665,7 @@ function applyLang() {
   requestAnimationFrame(tick);
 })();
 
-function newGame() {
+function newGame(keep = false) {
   board = Array(N*N).fill(null); dia = Array(N*N).fill(false);
   score = 0; shown = 0; combo = 0; sinceClear = 0; energy = 0; pendingBombs = 0; revives = 0; feverUntil = 0; busy = false;
   bestAtStart = save.best; recordBroken = false; traysDealt = 0;
@@ -673,21 +673,37 @@ function newGame() {
   tray = freshTray();
   $('over').hidden = true; $('score').textContent = 0;
   renderBoard(); renderTray(); renderEnergy(); renderProfile();
-  clearRound();
+  if (!keep) clearRound();
 }
 
-// ---- the running round survives closing the app (kept on this device) ----
+// ---- the running round: kept on this device and, when there is a cloud profile, in the viewer's account ----
 const ROUND_KEY = 'blockmaster-round';
-function saveRound() {
-  try { localStorage.setItem(ROUND_KEY, JSON.stringify({ board, dia, tray, score, combo, sinceClear, energy, pendingBombs, revives, bestAtStart, recordBroken, traysDealt })); } catch {}
+let roundRef = null, roundTimer = 0, roundSavedAt = 0, cloudRound = null;
+function validRound(d) {
+  return !!d && Array.isArray(d.board) && d.board.length === N*N && Array.isArray(d.tray) && d.tray.length > 0 &&
+    d.tray.every(p => p && Array.isArray(p.shape) && p.shape.length) && num(d.score) > 0;
 }
-function clearRound() { try { localStorage.removeItem(ROUND_KEY); } catch {} }
+function flushRound() {
+  if (!roundRef) return;
+  roundRef.set(JSON.parse(JSON.stringify(roundBody()))).catch(() => {});
+}
+function roundBody() {
+  return { board, dia, tray, score, combo, sinceClear, energy, pendingBombs, revives, bestAtStart, recordBroken, traysDealt, savedAt: Date.now() };
+}
+function saveRound() {
+  const body = roundBody(); roundSavedAt = body.savedAt;
+  try { localStorage.setItem(ROUND_KEY, JSON.stringify(body)); } catch {}
+  if (roundRef) { clearTimeout(roundTimer); roundTimer = setTimeout(flushRound, 1500); }
+}
+function clearRound() {
+  roundSavedAt = 0; clearTimeout(roundTimer); cloudRound = null;
+  try { localStorage.removeItem(ROUND_KEY); } catch {}
+  if (roundRef) roundRef.delete().catch(() => {});
+}
 function loadRound() {
   try {
     const d = JSON.parse(localStorage.getItem(ROUND_KEY) || 'null');
-    const ok = d && Array.isArray(d.board) && d.board.length === N*N && Array.isArray(d.tray) && d.tray.length &&
-      d.tray.every(p => p && Array.isArray(p.shape) && p.shape.length) && num(d.score) > 0;
-    return ok ? d : null;
+    return validRound(d) ? d : null;
   } catch { return null; }
 }
 function restoreRound(d) {
@@ -696,9 +712,9 @@ function restoreRound(d) {
   dia = Array.isArray(d.dia) && d.dia.length === N*N ? d.dia.map(Boolean) : Array(N*N).fill(false);
   energy = num(d.energy); pendingBombs = num(d.pendingBombs); revives = num(d.revives); shown = score;
   bestAtStart = d.bestAtStart ?? save.best; recordBroken = !!d.recordBroken; traysDealt = num(d.traysDealt);
+  roundSavedAt = num(d.savedAt);
   $('score').textContent = score;
   renderBoard(); renderTray(); renderEnergy(); renderProfile(); checkOver();
-  if ($('over').hidden) saveRound();
 }
 
 // ---- score, xp, crystals ----
@@ -1283,7 +1299,7 @@ if (ONLINE) {
   $('startBoard').onclick = openBoard; $('overBoard').onclick = openBoard;
   document.addEventListener('visibilitychange', () => { if (document.hidden) submitScore(); });
 }
-$('again').onclick = newGame;
+$('again').onclick = () => newGame();
 $('revive').onclick = revive;
 $('missionBtn').onclick = openMissions;
 $('crystalPill').onclick = openMissions;
@@ -1307,6 +1323,9 @@ async function cloudInit() {
   const ref = db.doc('data/users/' + id + '/profile');
   const snap = await ref.get();
   if (snap.exists) mergeCloud(snap.data() || {});
+  roundRef = db.doc('data/users/' + id + '/round');
+  const rs = await roundRef.get();
+  if (rs.exists && validRound(rs.data())) cloudRound = rs.data();
   cloudRef = ref; cloudState = 'cloud';
   cloudDirty = true; flushCloud();
 }
@@ -1355,21 +1374,27 @@ async function flushCloud() {
   cloudBusy = false;
   if (cloudDirty) scheduleCloud();
 }
-document.addEventListener('visibilitychange', () => { if (document.hidden) { clearTimeout(cloudTimer); flushCloud(); } });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { clearTimeout(cloudTimer); flushCloud(); clearTimeout(roundTimer); flushRound(); } });
+addEventListener('pagehide', () => { clearTimeout(roundTimer); flushRound(); });
 function renderSync() {
   $('sync').textContent = cloudState === 'cloud' ? t('syncCloud')
     : ONLINE && save.name ? t('syncDevice', { n: save.name }) : t('syncLocal');
 }
 function afterSync() {
   dailySetup();
-  renderProfile(); renderStartStats(); applyLang(); renderSync();
+  renderProfile(); applyLang(); renderSync();
+  if (cloudRound && cloudRound.savedAt > roundSavedAt) {
+    restoreRound(cloudRound);
+    try { localStorage.setItem(ROUND_KEY, JSON.stringify(cloudRound)); } catch {}
+  }
+  renderStartStats();
   // the player already pressed Play while we were loading: show the bonus now
   if (dayBonusPending && $('start').hidden && $('modal').hidden) { dayBonusPending = false; openDayBonus(); }
 }
 
 function start(data) {
   const saved = loadRound();
-  newGame();
+  newGame(true);
   if (data && Array.isArray(data.board) && data.board.length === N*N) restoreRound(data);
   else { if (saved) restoreRound(saved); showStart(); }
   applyLang(); renderSync();
