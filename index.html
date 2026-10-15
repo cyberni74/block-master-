@@ -357,7 +357,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:3px}
 <div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
 
 <script>
-const N = 8, COLORS = 7, BOMB = 7, ENERGY_MAX = 9, FEVER_MS = 20000, MISSION_REWARD = 6, DIAMOND_VALUE = 2, LEVEL_REWARD = 8, RECORD_REWARD = 15;
+const N = 8, COLORS = 7, BOMB = 7, ENERGY_MAX = 9, FEVER_MS = 20000, HS_EPOCH = 2, MISSION_REWARD = 6, DIAMOND_VALUE = 2, LEVEL_REWARD = 8, RECORD_REWARD = 15;
 const COST = { reroll: 20, bomb: 40 };
 
 const I18N = {
@@ -437,11 +437,13 @@ const xpNeed = lvl => 600 + lvl * 400;
 
 // ---- persistent profile ----
 const SAVE_KEY = 'blockmaster-v1';
-const save = { best: 0, crystals: 15, xp: 0, level: 1, lang: '', muted: false, music: true, streak: 0, lastLogin: '', day: '', missions: [], name: '' };
+const save = { best: 0, crystals: 15, xp: 0, level: 1, lang: '', muted: false, music: true, hsEpoch: 0, streak: 0, lastLogin: '', day: '', missions: [], name: '' };
 try { Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); } catch {}
 if (!I18N[save.lang]) save.lang = (navigator.language || '').startsWith('th') ? 'th' : 'de';
 const persistLocal = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch {} };
 const persist = () => { save.savedAt = Date.now(); persistLocal(); scheduleCloud(); };
+// one-time highscore reset: a profile saved under an older epoch starts again from 0 (level, crystals and missions stay)
+if (save.hsEpoch !== HS_EPOCH) { save.best = 0; save.hsEpoch = HS_EPOCH; persistLocal(); }
 const t = (k, vars = {}) => String(I18N[save.lang][k] ?? I18N.de[k] ?? k).replace(/\{(\w+)\}/g, (_, v) => vars[v] ?? '');
 
 const $ = id => document.getElementById(id);
@@ -1401,7 +1403,7 @@ $('modal').addEventListener('click', e => { if (e.target === $('modal')) closeSh
 window.claude?.hot?.snapshot?.(() => ({ board, dia, tray, score, combo, sinceClear, energy, pendingBombs, revives, bestAtStart, recordBroken, traysDealt }));
 // ---- cloud save: the profile lives in the viewer's private space of this artifact's store ----
 // (data/users/<id>/profile, readable and writable only by that person, on every device)
-const CLOUD_FIELDS = ['best', 'crystals', 'xp', 'level', 'lang', 'muted', 'music', 'streak', 'lastLogin', 'day', 'missions', 'savedAt'];
+const CLOUD_FIELDS = ['best', 'crystals', 'xp', 'level', 'lang', 'muted', 'music', 'hsEpoch', 'streak', 'lastLogin', 'day', 'missions', 'savedAt'];
 let cloudRef = null, cloudBusy = false, cloudDirty = false, cloudTimer = 0, cloudLast = '', cloudState = 'local';
 const num = (v, d = 0) => Number.isFinite(+v) ? +v : d;
 async function cloudInit() {
@@ -1419,7 +1421,7 @@ async function cloudInit() {
 }
 // merge field by field so nothing earned on either device is lost
 function mergeCloud(c) {
-  save.best = Math.max(save.best, num(c.best));
+  if (c.hsEpoch === HS_EPOCH) save.best = Math.max(save.best, num(c.best));   // a highscore from an older epoch is ignored
   const cl = num(c.level, 1), cx = num(c.xp);
   if (cl > save.level || (cl === save.level && cx > save.xp)) { save.level = cl; save.xp = cx; }
   if (num(c.savedAt) > num(save.savedAt)) {
