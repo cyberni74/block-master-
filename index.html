@@ -292,6 +292,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:3px}
   <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5" fill="#38d93c" stroke="#38d93c" stroke-width="2" stroke-linejoin="round"/></symbol>
   <symbol id="crown" viewBox="0 0 24 24"><path d="M3 8l4.5 4L12 4l4.5 8L21 8l-2 11H5z" fill="#ffc23d" stroke="#ff8a1f" stroke-width="1.2" stroke-linejoin="round"/><circle cx="12" cy="4" r="1.6" fill="#fff3b0"/><circle cx="3" cy="8" r="1.4" fill="#fff3b0"/><circle cx="21" cy="8" r="1.4" fill="#fff3b0"/><path d="M6 16.5h12" stroke="#a8540f" stroke-width="1.2"/><circle cx="12" cy="14" r="1.3" fill="#ff2e3f"/></symbol>
   <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></symbol>
+  <symbol id="i-sfx" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></symbol>
   <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 9.5l5 5M21.5 9.5l-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
 </svg>
 
@@ -372,7 +373,7 @@ const I18N = {
     recordEvent: 'NEUER HIGHSCORE!', recordAhead: '+{n} drüber', recordReward: '+15 Kristalle · 15 s Fieber ×2',energy: 'Energie', level: 'Level', over: 'Kein Platz mehr', newGame: 'Neues Spiel',
     newRecord: 'Neuer Rekord!', pts: '{n} Punkte', revive: 'Weiterspielen', reroll: 'Neue Blöcke', bomb: 'Bombe',
     missions: 'Missionen', daily: 'Tagesmissionen', close: 'Weiter', claim: 'Abholen', dayBonus: 'Tagesbonus', dayN: 'Tag {n} in Folge',
-    dayHint: 'Komm morgen wieder. Der Bonus wächst jeden Tag.', day: 'Tag', sound: 'Ton', lang: 'Sprache', crystals: 'Kristalle',
+    dayHint: 'Komm morgen wieder. Der Bonus wächst jeden Tag.', day: 'Tag', sound: 'Ton', sound_all: 'Ton: Musik und Effekte', sound_sfx: 'Ton: nur Effekte', sound_off: 'Ton aus', lang: 'Sprache', crystals: 'Kristalle',
     help: 'Mehrere Reihen auf einmal = riesiger Bonus. Reihe in einer Farbe = ×3. Diamanten bringen Kristalle.',
     noCrystals: 'Zu wenig Kristalle', missionDone: 'Mission geschafft! +{n}', levelUp: 'Level {n}!', levelReward: '+{n} Kristalle',
     fever: 'Fieber ×2', feverStart: 'FIEBER ×2!', combo: 'Combo ×{n}', mono: 'Eine Farbe ×{n}', perfect: 'Perfekt! +500',
@@ -394,7 +395,7 @@ const I18N = {
     recordEvent: 'ทำลายสถิติ!', recordAhead: 'เกิน +{n}', recordReward: '+15 คริสตัล · ฟีเวอร์ ×2 15 วินาที',energy: 'พลังงาน', level: 'เลเวล', over: 'ไม่มีที่ว่างแล้ว', newGame: 'เกมใหม่',
     newRecord: 'สถิติใหม่!', pts: '{n} คะแนน', revive: 'เล่นต่อ', reroll: 'บล็อกใหม่', bomb: 'ระเบิด',
     missions: 'ภารกิจ', daily: 'ภารกิจประจำวัน', close: 'ตกลง', claim: 'รับรางวัล', dayBonus: 'โบนัสรายวัน', dayN: 'วันที่ {n} ติดต่อกัน',
-    dayHint: 'กลับมาพรุ่งนี้ โบนัสจะเพิ่มขึ้นทุกวัน', day: 'วัน', sound: 'เสียง', lang: 'ภาษา', crystals: 'คริสตัล',
+    dayHint: 'กลับมาพรุ่งนี้ โบนัสจะเพิ่มขึ้นทุกวัน', day: 'วัน', sound: 'เสียง', sound_all: 'เสียง: เพลงและเอฟเฟกต์', sound_sfx: 'เสียง: เฉพาะเอฟเฟกต์', sound_off: 'ปิดเสียง', lang: 'ภาษา', crystals: 'คริสตัล',
     help: 'เคลียร์หลายแถวพร้อมกัน = โบนัสมหาศาล แถวสีเดียว = ×3 เพชรให้คริสตัล',
     noCrystals: 'คริสตัลไม่พอ', missionDone: 'ภารกิจสำเร็จ! +{n}', levelUp: 'เลเวล {n}!', levelReward: '+{n} คริสตัล',
     fever: 'ฟีเวอร์ ×2', feverStart: 'ฟีเวอร์ ×2!', combo: 'คอมโบ ×{n}', mono: 'สีเดียว ×{n}', perfect: 'เพอร์เฟกต์! +500',
@@ -436,7 +437,7 @@ const xpNeed = lvl => 600 + lvl * 400;
 
 // ---- persistent profile ----
 const SAVE_KEY = 'blockmaster-v1';
-const save = { best: 0, crystals: 15, xp: 0, level: 1, lang: '', muted: false, streak: 0, lastLogin: '', day: '', missions: [], name: '' };
+const save = { best: 0, crystals: 15, xp: 0, level: 1, lang: '', muted: false, music: true, streak: 0, lastLogin: '', day: '', missions: [], name: '' };
 try { Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); } catch {}
 if (!I18N[save.lang]) save.lang = (navigator.language || '').startsWith('th') ? 'th' : 'de';
 const persistLocal = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch {} };
@@ -771,7 +772,7 @@ function startDrag(e, idx, el) {
   if (!$('over').hidden || busy) return;
   if (drag) dragEnd(true);
   e.preventDefault();
-  audio();
+  audio(); musicArmed = true; startMusic();
   const p = tray[idx], m = metrics(), [h, w] = dims(p.shape);
   const g = document.createElement('div'); g.className = 'ghost' + (p.bomb ? ' bomb' : '');
   g.style.gridTemplate = `repeat(${h}, ${m.size}px) / repeat(${w}, ${m.size}px)`;
@@ -828,7 +829,7 @@ function place(idx, p, [r, c]) {
   if (p.bomb) return explode(r, c);
   p.shape.forEach(([dr, dc], k) => { const i = (r+dr)*N + c+dc; board[i] = p.color; dia[i] = k === p.dia; });
   addScore(p.shape.length);
-  sfx.place();
+  sfx.place(p.shape.length);
   const lines = fullLines(new Set()), n = lines.rows.length + lines.cols.length;
   renderBoard();
   if (!n) {
@@ -946,7 +947,7 @@ function usePower(kind) {
     tray = tray.map(p => p.used || p.bomb ? p : fresh.shift());
   }
   if (kind === 'bomb') { const k = tray.findIndex(p => p.used); tray[k >= 0 ? k : tray.length - 1] = bombPiece(); }
-  persist(); renderTray(); renderProfile(); sfx.place(); checkOver();
+  persist(); renderTray(); renderProfile(); sfx.place(3); checkOver();
 }
 
 // ---- spectacle ----
@@ -1125,8 +1126,33 @@ function tone(freq, when, dur, type = 'sine', vol = .15) {
   o.connect(g).connect(a.destination); o.start(tt); o.stop(tt + dur + .02);
 }
 const SCALE = [523, 659, 784, 1047, 1319, 1568, 2093];
+// wooden "tock" for placing a block: a pitch-dropped body thump, inharmonic wood-bar partials and a short strike click
+let noiseBuf = null;
+function noiseBurst(a, when, dur, freq, q, vol) {
+  if (!noiseBuf) { noiseBuf = a.createBuffer(1, a.sampleRate, a.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+  const src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain(), t0 = a.currentTime + when;
+  src.buffer = noiseBuf; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q;
+  g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(.001, t0 + dur);
+  src.connect(f).connect(g).connect(a.destination); src.start(t0, Math.random() * .5); src.stop(t0 + dur + .02);
+}
+function woodKnock(size = 1) {
+  const a = audio(); if (!a) return;
+  const t0 = a.currentTime, big = Math.min(size, 9) / 9;
+  const base = 520 - big * 190 + Math.random() * 50;              // bigger piece, lower knock
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(base * .55, t0); o.frequency.exponentialRampToValueAtTime(base * .28, t0 + .07);
+  g.gain.setValueAtTime(.0001, t0); g.gain.linearRampToValueAtTime(.42, t0 + .004); g.gain.exponentialRampToValueAtTime(.001, t0 + .12);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + .13);
+  [[1, .2, .09], [2.76, .12, .05], [5.4, .06, .03]].forEach(([r, v, d]) => {
+    const pt = a.createOscillator(), pg = a.createGain();
+    pt.type = 'sine'; pt.frequency.value = base * r;
+    pg.gain.setValueAtTime(.0001, t0); pg.gain.linearRampToValueAtTime(v, t0 + .003); pg.gain.exponentialRampToValueAtTime(.001, t0 + d);
+    pt.connect(pg).connect(a.destination); pt.start(t0); pt.stop(t0 + d + .02);
+  });
+  noiseBurst(a, 0, .02, 1300 + Math.random() * 400, 1.1, .12);
+}
 const sfx = {
-  place: () => tone(330, 0, .08, 'triangle', .12),
+  place: n => woodKnock(n),
   clear: n => { for (let k = 0; k < 2 + n; k++) tone(SCALE[Math.min(k, 6)], k * .06, .35, 'sine', .12); },
   tier: n => { [1, 1.25, 1.5, 2].forEach((m, k) => tone(262 * m * (1 + n * .06), .15 + k * .08, .6, 'square', .05)); tone(65, 0, .5, 'sawtooth', .12); },
   boom: () => { tone(55, 0, .6, 'sawtooth', .22); tone(110, 0, .3, 'square', .1); for (let k = 0; k < 5; k++) tone(SCALE[6 - k], .1 + k * .05, .3, 'sine', .08); },
@@ -1151,13 +1177,73 @@ const sfx = {
   },
   over: () => [392, 330, 262].forEach((f, k) => tone(f, k * .18, .4, 'triangle', .1)),
 };
+// ---- background music: a calm generative loop (soft pad + wooden marimba), synthesised, no files ----
+const mtof = m => 440 * 2 ** ((m - 69) / 12);
+const CHORDS = [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]];   // Am F C G
+const PENTA = [60, 62, 64, 67, 69, 72, 74, 76, 79];                         // C major pentatonic
+const MUSIC_STEP = .5;                                                      // seconds per step, 8 steps per chord
+let musicBus = null, musicTimer = 0, musicNext = 0, musicStep = 0, musicArmed = false;
+const musicOn = () => !save.muted && save.music !== false;
+function padNote(f, t0, dur) {
+  const o = ac.createOscillator(), lp = ac.createBiquadFilter(), g = ac.createGain();
+  o.type = 'triangle'; o.frequency.value = f; o.detune.value = (Math.random() - .5) * 10;
+  lp.type = 'lowpass'; lp.frequency.value = 900;
+  g.gain.setValueAtTime(.0001, t0); g.gain.linearRampToValueAtTime(.028, t0 + 1.1);
+  g.gain.setValueAtTime(.028, t0 + dur - 1.2); g.gain.linearRampToValueAtTime(.0001, t0 + dur);
+  o.connect(lp).connect(g).connect(musicBus); o.start(t0); o.stop(t0 + dur + .05);
+}
+function pluck(f, t0, dur, vol, type) {
+  const o = ac.createOscillator(), o2 = ac.createOscillator(), g = ac.createGain(), g2 = ac.createGain();
+  o.type = type; o.frequency.value = f; o2.type = 'sine'; o2.frequency.value = f * 3.9;
+  g.gain.setValueAtTime(.0001, t0); g.gain.linearRampToValueAtTime(vol, t0 + .006); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+  g2.gain.setValueAtTime(vol * .35, t0); g2.gain.exponentialRampToValueAtTime(.0001, t0 + dur * .25);
+  o.connect(g).connect(musicBus); o2.connect(g2).connect(musicBus);
+  o.start(t0); o2.start(t0); o.stop(t0 + dur + .05); o2.stop(t0 + dur * .25 + .05);
+}
+function scheduleMusic(until = ac.currentTime + .8) {
+  while (musicNext < until) {
+    const bar = Math.floor(musicStep / 8) % CHORDS.length, st = musicStep % 8, chord = CHORDS[bar], t0 = musicNext;
+    if (st === 0) {
+      chord.forEach(m => padNote(mtof(m), t0, 4.2));
+      pluck(mtof(chord[0] - 12), t0, 1.6, .1, 'sine');
+    }
+    if (Math.random() < (st % 2 === 0 ? .55 : .2)) pluck(mtof(PENTA[Math.floor(Math.random() * PENTA.length)]), t0 + Math.random() * .04, 1.2, .045, 'triangle');
+    musicNext += MUSIC_STEP; musicStep++;
+  }
+}
+function startMusic() {
+  if (!musicArmed || musicTimer || !musicOn()) return;
+  const a = audio(); if (!a) return;
+  if (!musicBus) { musicBus = a.createGain(); musicBus.gain.value = 0; musicBus.connect(a.destination); }
+  const t0 = a.currentTime;
+  musicBus.gain.cancelScheduledValues(t0); musicBus.gain.setValueAtTime(musicBus.gain.value, t0); musicBus.gain.linearRampToValueAtTime(.85, t0 + 2);
+  musicNext = t0 + .1; musicStep = 0;
+  scheduleMusic(); musicTimer = setInterval(() => { if (ac) scheduleMusic(); }, 150);
+}
+function stopMusic() {
+  clearInterval(musicTimer); musicTimer = 0;
+  if (musicBus && ac) { const t0 = ac.currentTime; musicBus.gain.cancelScheduledValues(t0); musicBus.gain.setValueAtTime(musicBus.gain.value, t0); musicBus.gain.linearRampToValueAtTime(0, t0 + .4); }
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) stopMusic(); else startMusic(); });
+
+// sound button cycles: music + effects → effects only → off
+const soundState = () => save.muted ? 'off' : save.music === false ? 'sfx' : 'all';
 function renderMute() {
-  $('mute').innerHTML = `<svg><use href="#${save.muted ? 'i-mute' : 'i-sound'}"/></svg>`;
-  $('mute').setAttribute('aria-label', t('sound')); $('mute').setAttribute('aria-pressed', String(save.muted));
+  const st = soundState();
+  $('mute').innerHTML = `<svg><use href="#${st === 'off' ? 'i-mute' : st === 'sfx' ? 'i-sfx' : 'i-sound'}"/></svg>`;
+  $('mute').setAttribute('aria-label', t('sound_' + st)); $('mute').setAttribute('aria-pressed', String(st !== 'all'));
 }
 
 // ---- wiring ----
-$('mute').onclick = () => { save.muted = !save.muted; persist(); renderMute(); };
+$('mute').onclick = () => {
+  const st = soundState();
+  if (st === 'all') save.music = false;                    // effects only
+  else if (st === 'sfx') save.muted = true;                // everything off
+  else { save.muted = false; save.music = true; }          // back to everything
+  persist(); renderMute(); audio();
+  if (musicOn()) startMusic(); else stopMusic();
+  toast(t('sound_' + soundState()));
+};
 $('lang').onclick = $('startLang').onclick = () => { save.lang = save.lang === 'de' ? 'th' : 'de'; persist(); applyLang(); };
 
 // ---- start screen ----
@@ -1171,7 +1257,7 @@ function renderStartStats() {
   $('startLvl').textContent = save.level;
 }
 $('play').onclick = () => {
-  audio(); sfx.tier(2);
+  audio(); sfx.tier(2); musicArmed = true; startMusic();
   $('start').classList.add('leave');
   setTimeout(() => {
     $('start').hidden = true;
@@ -1267,7 +1353,7 @@ $('modal').addEventListener('click', e => { if (e.target === $('modal')) closeSh
 window.claude?.hot?.snapshot?.(() => ({ board, dia, tray, score, combo, sinceClear, energy, pendingBombs, revives, bestAtStart, recordBroken, traysDealt }));
 // ---- cloud save: the profile lives in the viewer's private space of this artifact's store ----
 // (data/users/<id>/profile, readable and writable only by that person, on every device)
-const CLOUD_FIELDS = ['best', 'crystals', 'xp', 'level', 'lang', 'muted', 'streak', 'lastLogin', 'day', 'missions', 'savedAt'];
+const CLOUD_FIELDS = ['best', 'crystals', 'xp', 'level', 'lang', 'muted', 'music', 'streak', 'lastLogin', 'day', 'missions', 'savedAt'];
 let cloudRef = null, cloudBusy = false, cloudDirty = false, cloudTimer = 0, cloudLast = '', cloudState = 'local';
 const num = (v, d = 0) => Number.isFinite(+v) ? +v : d;
 async function cloudInit() {
@@ -1292,6 +1378,7 @@ function mergeCloud(c) {
     save.crystals = num(c.crystals, save.crystals);
     if (I18N[c.lang]) save.lang = c.lang;
     if (typeof c.muted === 'boolean') save.muted = c.muted;
+    if (typeof c.music === 'boolean') save.music = c.music;
   }
   // daily streak: the later login wins; same day → the longer streak
   if (typeof c.lastLogin === 'string' && (c.lastLogin > save.lastLogin || (c.lastLogin === save.lastLogin && num(c.streak) > save.streak))) {
