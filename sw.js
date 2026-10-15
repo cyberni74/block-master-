@@ -1,6 +1,6 @@
 // Block Master service worker: the game works offline once opened.
 // Pages are fetched network-first (so updates arrive), everything else cache-first.
-const CACHE = 'block-master-v8';
+const CACHE = 'block-master-v9';
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

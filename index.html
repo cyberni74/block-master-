@@ -356,7 +356,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:3px}
 <div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
 
 <script>
-const N = 10, COLORS = 7, BOMB = 7, ENERGY_MAX = 9, FEVER_MS = 20000, MISSION_REWARD = 15;
+const N = 10, COLORS = 7, BOMB = 7, ENERGY_MAX = 9, FEVER_MS = 20000, MISSION_REWARD = 6, DIAMOND_VALUE = 2, LEVEL_REWARD = 8, RECORD_REWARD = 15;
 const COST = { reroll: 20, bomb: 40 };
 
 const I18N = {
@@ -369,7 +369,7 @@ const I18N = {
     loading: 'Lädt …', player: 'Spieler',
     syncCloud: 'Fortschritt in deinem Claude-Konto gespeichert, auf allen Geräten', syncLocal: 'Fortschritt nur auf diesem Gerät gespeichert',
     points: 'Punkte', best: 'Rekord',highscore: 'Highscore', chase: 'noch {n}', chaseFirst: 'erster Rekord!',
-    recordEvent: 'NEUER HIGHSCORE!', recordAhead: '+{n} drüber', recordReward: '+50 Kristalle · 15 s Fieber ×2',energy: 'Energie', level: 'Level', over: 'Kein Platz mehr', newGame: 'Neues Spiel',
+    recordEvent: 'NEUER HIGHSCORE!', recordAhead: '+{n} drüber', recordReward: '+15 Kristalle · 15 s Fieber ×2',energy: 'Energie', level: 'Level', over: 'Kein Platz mehr', newGame: 'Neues Spiel',
     newRecord: 'Neuer Rekord!', pts: '{n} Punkte', revive: 'Weiterspielen', reroll: 'Neue Blöcke', bomb: 'Bombe',
     missions: 'Missionen', daily: 'Tagesmissionen', close: 'Weiter', claim: 'Abholen', dayBonus: 'Tagesbonus', dayN: 'Tag {n} in Folge',
     dayHint: 'Komm morgen wieder. Der Bonus wächst jeden Tag.', day: 'Tag', sound: 'Ton', lang: 'Sprache', crystals: 'Kristalle',
@@ -391,7 +391,7 @@ const I18N = {
     loading: 'กำลังโหลด …', player: 'ผู้เล่น',
     syncCloud: 'บันทึกความคืบหน้าในบัญชี Claude ของคุณ ใช้ได้ทุกอุปกรณ์', syncLocal: 'บันทึกความคืบหน้าในอุปกรณ์นี้เท่านั้น',
     points: 'คะแนน', best: 'สถิติ',highscore: 'สถิติสูงสุด', chase: 'อีก {n}', chaseFirst: 'สถิติแรก!',
-    recordEvent: 'ทำลายสถิติ!', recordAhead: 'เกิน +{n}', recordReward: '+50 คริสตัล · ฟีเวอร์ ×2 15 วินาที',energy: 'พลังงาน', level: 'เลเวล', over: 'ไม่มีที่ว่างแล้ว', newGame: 'เกมใหม่',
+    recordEvent: 'ทำลายสถิติ!', recordAhead: 'เกิน +{n}', recordReward: '+15 คริสตัล · ฟีเวอร์ ×2 15 วินาที',energy: 'พลังงาน', level: 'เลเวล', over: 'ไม่มีที่ว่างแล้ว', newGame: 'เกมใหม่',
     newRecord: 'สถิติใหม่!', pts: '{n} คะแนน', revive: 'เล่นต่อ', reroll: 'บล็อกใหม่', bomb: 'ระเบิด',
     missions: 'ภารกิจ', daily: 'ภารกิจประจำวัน', close: 'ตกลง', claim: 'รับรางวัล', dayBonus: 'โบนัสรายวัน', dayN: 'วันที่ {n} ติดต่อกัน',
     dayHint: 'กลับมาพรุ่งนี้ โบนัสจะเพิ่มขึ้นทุกวัน', day: 'วัน', sound: 'เสียง', lang: 'ภาษา', crystals: 'คริสตัล',
@@ -436,7 +436,7 @@ const xpNeed = lvl => 600 + lvl * 400;
 
 // ---- persistent profile ----
 const SAVE_KEY = 'blockmaster-v1';
-const save = { best: 0, crystals: 30, xp: 0, level: 1, lang: '', muted: false, streak: 0, lastLogin: '', day: '', missions: [], name: '' };
+const save = { best: 0, crystals: 15, xp: 0, level: 1, lang: '', muted: false, streak: 0, lastLogin: '', day: '', missions: [], name: '' };
 try { Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); } catch {}
 if (!I18N[save.lang]) save.lang = (navigator.language || '').startsWith('th') ? 'th' : 'de';
 const persistLocal = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch {} };
@@ -466,7 +466,7 @@ function pickShape(fill, maxSize = 9, d = 0) {
   for (const [shape, w] of pool) if ((x -= w) <= 0) return shape;
   return pool[pool.length - 1][0];
 }
-const pieceOf = shape => ({ shape, color: rnd(COLORS), dia: Math.random() < .12 ? rnd(shape.length) : -1, used: false });
+const pieceOf = shape => ({ shape, color: rnd(COLORS), dia: Math.random() < .04 ? rnd(shape.length) : -1, used: false });
 const newPiece = (fill = 0, maxSize = 9) => pieceOf(pickShape(fill, maxSize));
 const bombPiece = () => ({ shape: [[0,0]], color: BOMB, dia: -1, bomb: true, used: false });
 const dims = shape => [Math.max(...shape.map(s => s[0])) + 1, Math.max(...shape.map(s => s[1])) + 1];
@@ -690,7 +690,7 @@ function addScore(p) {
   let ups = 0;
   while (save.xp >= xpNeed(save.level)) { save.xp -= xpNeed(save.level); save.level++; ups++; }
   if (ups) {
-    const reward = 25 * ups;
+    const reward = LEVEL_REWARD * ups;
     save.crystals += reward;
     setTimeout(() => { floatText(t('levelUp', { n: save.level }), 'tier low', 3); toast(t('levelReward', { n: reward })); rain(40); sfx.tier(5); bump(); }, 700);
   }
@@ -719,7 +719,7 @@ function dailySetup() {
   }
   persist();
 }
-const dayReward = n => 10 + 5 * (Math.min(n, 7) - 1);
+const dayReward = n => 5 + 2 * (Math.min(n, 7) - 1);
 function track(id, amount, isMax = false) {
   for (const m of save.missions) {
     if (m.id !== id || m.done) continue;
@@ -864,8 +864,8 @@ function clearCells(gone, then) {
   busy = true;
   const diamonds = [...gone].filter(i => dia[i]).length;
   if (diamonds) {
-    addCrystals(diamonds * 5); track('diamond', diamonds);
-    setTimeout(() => floatText(t('diamond', { n: diamonds * 5 }), 'ice'), 200);
+    addCrystals(diamonds * DIAMOND_VALUE); track('diamond', diamonds);
+    setTimeout(() => floatText(t('diamond', { n: diamonds * DIAMOND_VALUE }), 'ice'), 200);
   }
   gone.forEach(i => cells[i].classList.add('clear'));
   setTimeout(() => {
@@ -895,7 +895,7 @@ function recordEvent() {
   for (let k = 0; k < 6; k++) setTimeout(() => {
     const i = rnd(N*N); shockwave(i, 1.2 + Math.random()); burst([i, rnd(N*N), rnd(N*N)], 10, true);
   }, k * 260);
-  addCrystals(50);
+  addCrystals(RECORD_REWARD);
   setTimeout(submitScore, 4000);
   if (!feverOn()) startFever(15000, true);
   renderProfile();
@@ -968,7 +968,7 @@ function celebrate(gone, n, gain, mono) {
 }
 // 4+ lines at once: a full-screen stage that escalates with every extra line
 function bigEvent(n, gain) {
-  const lvl = Math.min(n, 6), reward = (n - 3) * 5, ms = 1600 + (n - 4) * 600;
+  const lvl = Math.min(n, 6), reward = (n - 3) * 2, ms = 1600 + (n - 4) * 600;
   const d = document.createElement('div'); d.className = 'record stage n' + lvl; d.style.setProperty('--n', n);
   d.innerHTML = (lvl >= 6 ? '<svg><use href="#crown"/></svg>' : '') +
     (n >= 5 ? '<p class="mk ultra">ULTRA KILL!</p>' : '<p class="mk">MONSTER KILL!</p>') +
