@@ -101,10 +101,10 @@ body{background:radial-gradient(ellipse at 50% 25%,#2b1f1d,var(--bg) 70%);backgr
 .record h3,.record p{max-width:100%;text-wrap:balance}
 .record p{position:relative;margin:0;font-weight:600;color:#fff3dc;text-align:center;text-shadow:0 2px 8px #000;animation:slam2 .6s .5s both}
 /* multi-line stage: grows with every extra line (--n = lines at once) */
-.record.stage{animation-duration:calc(1.6s + (var(--n) - 4) * .6s)}
+.record.stage{animation-duration:calc(1.6s + max(0, var(--n) - 4) * .6s)}
 .record.stage::before{animation-duration:calc(8s - var(--n) * 1s)}
 .record.stage h3{font-size:clamp(2rem, calc(3vw + var(--n) * 1.6vw), 4.2rem)}
-.record .pts{font-family:var(--display);font-weight:800;font-size:calc(1.4rem + (var(--n) - 4) * .5rem);color:#fff;text-shadow:0 0 16px #ffc23d,0 3px 0 #7a3a0c}
+.record .pts{font-family:var(--display);font-weight:800;font-size:calc(1.4rem + max(0, var(--n) - 4) * .5rem);color:#fff;text-shadow:0 0 16px #ffc23d,0 3px 0 #7a3a0c}
 .record .mk{font-family:var(--display);font-weight:800;font-size:clamp(1.6rem,8vw,2.4rem);letter-spacing:.04em;color:#ff2e3f;
   text-shadow:0 0 18px #ff2e3f,0 3px 0 #4a0008;animation:slam2 .5s cubic-bezier(.2,1.6,.4,1) .05s both, mkpulse .25s ease-in-out .6s 6 alternate}
 .record .mk.ultra{font-size:clamp(2rem,10vw,3rem);color:#fff;text-shadow:0 0 18px #ff3fc8,0 0 40px #9b45ff,0 3px 0 #3a0040;
@@ -1002,12 +1002,12 @@ function usePower(kind) {
 function celebrate(gone, n, gain, mono) {
   playClip('boom');
   burst([...gone], 2 + n * 2, n >= 3 || mono > 0);
-  if (n < 4) floatText('+' + gain);
+  if (n < 3) floatText('+' + gain);
   if (mono) floatText(t('mono', { n: 1 + 2 * mono }), 'ice');
   if (combo > 1) floatText(t('combo', { n: combo }), 'sub');
-  if (n >= 4) bigEvent(n, gain);
+  if (n >= 3) bigEvent(n, gain);
   if (n >= 2) {
-    if (n < 4) floatText(t('t' + n), 'tier', n);
+    if (n < 3) floatText(t('t' + n), 'tier', n);
     shake(4 + n * 3, .35 + n * .07);
     sfx.tier(n);
     try { navigator.vibrate?.(n * 25); } catch {}
@@ -1015,21 +1015,21 @@ function celebrate(gone, n, gain, mono) {
   if (n >= 3) { flash(); shockwave(Math.floor(N*N/2), 1 + n * .25); }
   if (n >= 4) rain(n * 14);
 }
-// 4+ lines at once: a full-screen stage that escalates with every extra line
+// 3+ lines at once: a full-screen stage that escalates with every extra line (3: Monster kill, 4+: Ultra kill)
 function bigEvent(n, gain) {
-  const lvl = Math.min(n, 6), reward = (n - 3) * 2, ms = 1600 + (n - 4) * 600;
+  const lvl = Math.min(n, 6), reward = (n - 3) * 2, ms = 1600 + Math.max(0, n - 4) * 600;
   const d = document.createElement('div'); d.className = 'record stage n' + lvl; d.style.setProperty('--n', n);
   d.innerHTML = (lvl >= 6 ? '<svg><use href="#crown"/></svg>' : '') +
-    (n >= 5 ? '<p class="mk ultra">ULTRA KILL!</p>' : '<p class="mk">MONSTER KILL!</p>') +
-    `<h3>${t('t' + lvl)}</h3><p class="pts">+${gain}</p><p>${t('diamond', { n: reward })}${feverOn() ? ' · ' + t('fever') : ''}</p>`;
+    (n >= 4 ? '<p class="mk ultra">ULTRA KILL!</p>' : '<p class="mk">MONSTER KILL!</p>') +
+    `<h3>${t('t' + lvl)}</h3><p class="pts">+${gain}</p><p>${[reward > 0 ? t('diamond', { n: reward }) : '', feverOn() ? t('fever') : ''].filter(Boolean).join(' · ')}</p>`;
   document.body.appendChild(d); setTimeout(() => d.remove(), ms + 100);
-  addCrystals(reward);
+  if (reward > 0) addCrystals(reward);
   // hit-stop: the board swells for a beat before it bursts
   app.classList.add('hitstop'); setTimeout(() => app.classList.remove('hitstop'), 90 + n * 20);
-  sfx.announce(n >= 5 ? 'Ultra kill!' : 'Monster kill!', n >= 5);   // 4 lines: Monster kill, 5+ lines: Ultra kill
+  sfx.announce(n >= 4 ? 'Ultra kill!' : 'Monster kill!', n >= 4);   // 3 lines: Monster kill, 4+ lines: Ultra kill
   if (n >= 5) { $('wrap').classList.add('rainbow'); setTimeout(() => $('wrap').classList.remove('rainbow'), ms); }
   if (n >= 6) setTimeout(sfx.fanfare, 2400);
-  for (let k = 0; k < (n - 3) * 3; k++) setTimeout(() => firework(), 150 + k * 220);
+  for (let k = 0; k < Math.max(2, (n - 3) * 3); k++) setTimeout(() => firework(), 150 + k * 220);
   if (n >= 6) for (let k = 0; k < 3; k++) setTimeout(() => { flash(); shake(22, .6); rain(60); }, 400 + k * 600);
 }
 function firework() {
