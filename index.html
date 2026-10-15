@@ -29,7 +29,7 @@ img{max-width:100%}
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;700;800&family=Noto+Sans+Thai:wght@400;600&family=Rubik:wght@400;500;700&display=swap">
 <style>
 /* Deliberately single dark look: jewel box — dark stone board, faceted gems in gold settings */
-/* Layout: one-screen column — top bar, level/score row, energy, square 10×10 board, tray, power-up bar */
+/* Layout: one-screen column — top bar, level/score row, energy, square 8×8 board, tray, power-up bar */
 :root{
   --bg:#17110f; --surface:#241c1a; --cell:#332b29; --cell-edge:#433836; --fg:#fff3dc; --muted:#b39c8a;
   --accent:#ffc23d; --gold:#c8873a; --ice:#5fd8ff; --glow:#3a8bff;
@@ -132,7 +132,7 @@ body{background:radial-gradient(ellipse at 50% 25%,#2b1f1d,var(--bg) 70%);backgr
 
 /* board */
 .boardwrap{position:relative;width:min(100%, calc(100dvh - 370px));aspect-ratio:1;max-width:100%;align-self:center}
-#board{position:absolute;inset:0;display:grid;grid-template-columns:repeat(10,1fr);gap:2px;padding:7px;
+#board{position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);gap:2px;padding:7px;
   background:linear-gradient(160deg,#2f2624,var(--surface));border-radius:10px;touch-action:none;
   box-shadow:0 0 0 3px #4a3530, 0 0 0 5px #1d1513, 0 18px 40px rgb(0 0 0 / .55);transition:box-shadow .4s}
 .boardwrap.fever #board{box-shadow:0 0 0 3px #ffc23d,0 0 26px #ffb000,0 18px 40px rgb(0 0 0 / .55)}
@@ -165,7 +165,7 @@ body{background:radial-gradient(ellipse at 50% 25%,#2b1f1d,var(--bg) 70%);backgr
 
 /* tray */
 .tray{flex:0 0 120px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;touch-action:none}
-.slot{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0}
+.slot{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;min-height:100px;touch-action:none;cursor:grab}
 .piece{display:grid;gap:2px;cursor:grab;padding:8px;touch-action:none;transition:opacity .2s,transform .2s}
 .piece:hover{transform:scale(1.05)}
 .piece.dead{opacity:.28}
@@ -177,7 +177,7 @@ body{background:radial-gradient(ellipse at 50% 25%,#2b1f1d,var(--bg) 70%);backgr
 @keyframes bob{50%{transform:translateY(-5px) scale(1.08)}}
 .tag{font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
 .ghost{position:fixed;left:0;top:0;display:grid;pointer-events:none;z-index:10;
-  opacity:.94}
+  opacity:.94;will-change:transform}
 .ghost i{display:block}
 
 /* power-ups */
@@ -357,7 +357,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:3px}
 <div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
 
 <script>
-const N = 10, COLORS = 7, BOMB = 7, ENERGY_MAX = 9, FEVER_MS = 20000, MISSION_REWARD = 6, DIAMOND_VALUE = 2, LEVEL_REWARD = 8, RECORD_REWARD = 15;
+const N = 8, COLORS = 7, BOMB = 7, ENERGY_MAX = 9, FEVER_MS = 20000, MISSION_REWARD = 6, DIAMOND_VALUE = 2, LEVEL_REWARD = 8, RECORD_REWARD = 15;
 const COST = { reroll: 20, bomb: 40 };
 
 const I18N = {
@@ -452,6 +452,7 @@ let bestAtStart = 0, recordBroken = false, dayBonusPending = false, traysDealt =
 
 const cells = [];
 for (let i = 0; i < N*N; i++) { const d = document.createElement('div'); d.className = 'cell'; boardEl.appendChild(d); cells.push(d); }
+let previewIdx = [], settling = false, dragRaf = 0;
 
 const rnd = n => Math.floor(Math.random() * n);
 // weighted pick blended by difficulty d (0 = early, 1 = late);
@@ -583,6 +584,7 @@ function blastArea(r, c) {
 
 // ---- rendering ----
 function renderBoard() {
+  previewIdx = [];
   cells.forEach((el, i) => {
     const on = board[i] != null;
     el.className = 'cell' + (on ? ' on' : '') + (on && dia[i] ? ' dia' : '');
@@ -605,7 +607,7 @@ function renderTray() {
         el.appendChild(b);
       });
       if (!fitsAnywhere(p.shape)) el.classList.add('dead');
-      el.addEventListener('pointerdown', e => startDrag(e, idx, el));
+      slot.addEventListener('pointerdown', e => startDrag(e, idx, el));
       slot.appendChild(el);
       if (p.bomb) { const tg = document.createElement('span'); tg.className = 'tag'; tg.textContent = t('bombTag'); slot.appendChild(tg); }
     }
@@ -768,8 +770,32 @@ function metrics() {
   const a = cells[0].getBoundingClientRect(), b = cells[1].getBoundingClientRect();
   return { size: a.width, step: b.left - a.left, left: a.left, top: a.top };
 }
+// ---- drag & drop ----
+// The ghost follows the finger every frame. Where it would land is the exact cell when that is free,
+// otherwise the nearest free spot within SNAP_R cells (spots that finish a line are slightly preferred).
+const SNAP_R = 2;
+const lineCount = (shape, r, c) => {
+  const f = fullLines(new Set(shape.map(([dr, dc]) => (r + dr) * N + c + dc)));
+  return f.rows.length + f.cols.length;
+};
+function snapPos(p, fr, fc, prev) {
+  const shape = p.shape, [h, w] = dims(shape);
+  const r0 = Math.round(fr), c0 = Math.round(fc);
+  if (fits(shape, r0, c0)) return [r0, c0];
+  const cost = (r, c) => Math.hypot(r - fr, c - fc) - (p.bomb ? 0 : .3 * Math.min(3, lineCount(shape, r, c)));
+  let best = null, bestK = Infinity;
+  for (let r = Math.max(0, Math.floor(fr - SNAP_R)); r <= Math.min(N - h, Math.ceil(fr + SNAP_R)); r++)
+    for (let c = Math.max(0, Math.floor(fc - SNAP_R)); c <= Math.min(N - w, Math.ceil(fc + SNAP_R)); c++) {
+      if (Math.hypot(r - fr, c - fc) > SNAP_R || !fits(shape, r, c)) continue;
+      const k = cost(r, c);
+      if (k < bestK) { bestK = k; best = [r, c]; }
+    }
+  // keep the previous target unless the new one is clearly better, so the preview does not flicker
+  if (best && prev && Math.hypot(prev[0] - fr, prev[1] - fc) <= SNAP_R && fits(shape, prev[0], prev[1]) && cost(prev[0], prev[1]) <= bestK + .2) return prev;
+  return best;
+}
 function startDrag(e, idx, el) {
-  if (!$('over').hidden || busy) return;
+  if (!$('over').hidden || busy || settling) return;
   if (drag) dragEnd(true);
   e.preventDefault();
   audio(); musicArmed = true; startMusic();
@@ -785,42 +811,64 @@ function startDrag(e, idx, el) {
   document.body.appendChild(g);
   el.classList.add('lifted');
   const gw = w * m.step - (m.step - m.size), gh = h * m.step - (m.step - m.size);
-  // lift the piece above the finger on touch so it stays visible
-  const lift = e.pointerType === 'mouse' ? gh / 2 : gh + 30;
-  drag = { idx, p, el, g, gw, gh, lift, m, pos: null };
-  try { el.setPointerCapture(e.pointerId); } catch {}
-  addEventListener('pointermove', moveDrag); addEventListener('pointerup', onDragUp); addEventListener('pointercancel', onDragCancel);
-  moveDrag(e);
+  // on touch the piece floats above the finger so it stays visible
+  const lift = e.pointerType === 'mouse' ? gh / 2 : Math.min(gh + 28, gh / 2 + 70);
+  drag = { idx, p, el, g, gw, gh, lift, m, pos: null, px: e.clientX, py: e.clientY, gx: 0, gy: 0 };
+  try { (e.currentTarget || el).setPointerCapture(e.pointerId); } catch {}
+  addEventListener('pointermove', moveDrag, { passive: true }); addEventListener('pointerup', onDragUp); addEventListener('pointercancel', onDragCancel);
+  applyDrag();
 }
 function moveDrag(e) {
   if (!drag) return;
-  const x = e.clientX - drag.gw / 2, y = e.clientY - drag.lift;
+  drag.px = e.clientX; drag.py = e.clientY;
+  if (!dragRaf) dragRaf = requestAnimationFrame(applyDrag);
+}
+function applyDrag() {
+  dragRaf = 0;
+  if (!drag) return;
+  const m = drag.m, x = drag.px - drag.gw / 2, y = drag.py - drag.lift;
+  drag.gx = x; drag.gy = y;
   drag.g.style.transform = `translate(${x}px, ${y}px)`;
-  const m = drag.m;
-  const c = Math.round((x - m.left) / m.step), r = Math.round((y - m.top) / m.step);
-  const pos = fits(drag.p.shape, r, c) ? [r, c] : null;
+  const pos = snapPos(drag.p, (y - m.top) / m.step, (x - m.left) / m.step, drag.pos);
   if (String(pos) !== String(drag.pos)) { drag.pos = pos; showPreview(); }
 }
+// the preview only touches the cells that change, never the whole board
+function clearPreview() {
+  for (const i of previewIdx) {
+    const el = cells[i];
+    el.classList.remove('prev', 'hint', 'boom');
+    if (board[i] == null) el.style.removeProperty('--c');
+  }
+  previewIdx = [];
+}
 function showPreview() {
-  renderBoard();
+  clearPreview();
   if (!drag.pos) return;
   const [r, c] = drag.pos, p = drag.p;
-  if (p.bomb) { blastArea(r, c).forEach(i => cells[i].classList.add('boom')); return; }
+  if (p.bomb) { blastArea(r, c).forEach(i => { cells[i].classList.add('boom'); previewIdx.push(i); }); return; }
   const extra = new Set(p.shape.map(([dr, dc]) => (r+dr)*N + c+dc));
-  extra.forEach(i => { cells[i].classList.add('prev'); cells[i].style.setProperty('--c', `var(--b${p.color})`); });
-  lineCells(fullLines(extra)).forEach(i => {
-    cells[i].classList.add('hint');
-    if (extra.has(i)) cells[i].style.setProperty('--c', `var(--b${p.color})`);
-  });
+  extra.forEach(i => { cells[i].classList.add('prev'); cells[i].style.setProperty('--c', `var(--b${p.color})`); previewIdx.push(i); });
+  lineCells(fullLines(extra)).forEach(i => { cells[i].classList.add('hint'); previewIdx.push(i); });
 }
 // the drag ends on the window, so it still ends when the piece itself is re-rendered mid-drag
-const onDragUp = () => dragEnd(false), onDragCancel = () => dragEnd(true);
+const onDragUp = e => { if (drag && e) { drag.px = e.clientX; drag.py = e.clientY; } dragEnd(false); };
+const onDragCancel = () => dragEnd(true);
 function dragEnd(cancel) {
   if (!drag) return;
-  const { idx, p, el, g, pos } = drag;
+  if (dragRaf) { cancelAnimationFrame(dragRaf); dragRaf = 0; }
+  if (!cancel) applyDrag();                                   // final spot from the release point
+  const { idx, p, el, g, pos, m, gx, gy } = drag;
   removeEventListener('pointermove', moveDrag); removeEventListener('pointerup', onDragUp); removeEventListener('pointercancel', onDragCancel);
-  g.remove(); el.classList.remove('lifted'); drag = null;
-  if (!cancel && pos) place(idx, p, pos); else renderBoard();
+  drag = null;
+  el.classList.remove('lifted');
+  if (cancel || !pos) { g.remove(); clearPreview(); return; }
+  const tx = m.left + pos[1] * m.step, ty = m.top + pos[0] * m.step;
+  if (Math.hypot(tx - gx, ty - gy) < m.step * .12) { g.remove(); clearPreview(); place(idx, p, pos); return; }
+  // not exactly on the spot: slide the piece into the gap, then place it
+  settling = true;
+  g.style.transition = 'transform .09s ease-out';
+  g.style.transform = `translate(${tx}px, ${ty}px)`;
+  setTimeout(() => { settling = false; g.remove(); clearPreview(); place(idx, p, pos); }, 90);
 }
 
 // ---- game rules ----
